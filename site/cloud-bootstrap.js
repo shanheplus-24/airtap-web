@@ -12,6 +12,28 @@
       event.ports[0].postMessage({token: sessionStorage.getItem(storageKey) || ''});
     }
   });
+  document.addEventListener('click', async event => {
+    const anchor = event.target.closest?.('a[href]');
+    if (!anchor) return;
+    const target = new URL(anchor.href, location.href);
+    if (target.origin !== location.origin || !target.pathname.startsWith('/api/')) return;
+    event.preventDefault();
+    try {
+      const response = await fetch(target.href, {cache: 'no-store'});
+      if (!response.ok) throw new Error('结果下载失败，请稍后重试。');
+      const disposition = response.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      const name = match ? match[1] : target.pathname.split('/').pop() || 'result';
+      const objectUrl = URL.createObjectURL(await response.blob());
+      const download = document.createElement('a');
+      download.href = objectUrl;
+      download.download = name;
+      download.click();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+    } catch (error) {
+      alert(error.message);
+    }
+  });
   const panel = document.createElement('div');
   panel.style.cssText = 'max-width:460px;margin:100px auto;padding:28px;font:16px Arial,sans-serif;line-height:1.6;color:#193344';
   panel.innerHTML = '<h1 style="font-size:25px;margin:0 0 12px">AirTAP</h1><p>输入访问码以连接计算服务器。</p><form><label for="access-code">访问码</label><input id="access-code" type="password" autocomplete="off" required style="box-sizing:border-box;width:100%;padding:12px;margin:8px 0 16px;font:inherit"><button type="submit" style="padding:10px 22px;background:#1976d2;border:0;border-radius:4px;color:white;font:inherit;cursor:pointer">连接</button></form><p id="connection-message" role="status"></p>';
