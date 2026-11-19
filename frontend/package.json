@@ -1,0 +1,81 @@
+{
+  "name": "idaes-flowsheet-processor-ui",
+  "author": "Michael Pesce",
+  "version": "0.1.0",
+  "private": true,
+  "main": "public/main.js",
+  "dependencies": {
+    "@emotion/react": "^11.9.3",
+    "@emotion/styled": "^11.9.3",
+    "@fontsource/roboto": "^4.5.7",
+    "@mui/icons-material": "^5.8.3",
+    "@mui/material": "^5.8.3",
+    "@testing-library/cypress": "^10.1.0",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.0",
+    "concurrently": "^7.3.0",
+    "cross-env": "^7.0.3",
+    "cypress": "^15.6.0",
+    "cypress-downloadfile": "^1.2.4",
+    "jointjs": "^3.5.5",
+    "plotly.js": "^2.21.0",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
+    "react-drag-drop-files": "^2.3.10",
+    "react-draggable": "^4.4.6",
+    "react-grid-layout": "^1.5.0",
+    "react-plotly.js": "^2.6.0",
+    "react-plotlyjs": "^0.4.4",
+    "react-router-dom": "^6.3.0",
+    "react-select": "^5.10.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "vite",
+    "app-start": "concurrently -k \"cross-env npm run start-backend\" \"vite\"",
+    "start-backend": "cd ../backend/src/idaes_flowsheet_processor_ui && python main.py",
+    "start-nob": "cross-env BROWSER=none vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "homepage": ".",
+  "packageManager": "npm@10.9.8",
+  "engines": {
+    "node": ">=22.12.0 <23",
+    "npm": ">=10.8.1 <11"
+  },
+  "overrides": {
+    "@remix-run/router": "1.23.2",
+    "flatted": "3.4.2",
+    "rollup": "4.59.0",
+    "systeminformation": "5.31.0",
+    "underscore": "1.13.8"
+  },
+  "devDependencies": {
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/ui": "^4.0.8",
+    "happy-dom": "20.8.9",
+    "vite": "6.4.2",
+    "vitest": "^4.0.8"
+  }
+}
