@@ -2,10 +2,13 @@
 (async () => {
   'use strict';
   const storageKey = 'airtap-private-access';
+  if (location.hash.includes('/watertap.flowsheets.airtap.airtap_ui/')) {
+    history.replaceState(null, '', location.pathname + location.search + '#/flowsheet/watertap.flowsheets.airtap_harvester.airtap_ui/config');
+  }
   const fragment = new URLSearchParams(location.hash.slice(1));
   if (fragment.has('access')) {
     sessionStorage.setItem(storageKey, fragment.get('access'));
-    history.replaceState(null, '', location.pathname + location.search + '#/flowsheets');
+    history.replaceState(null, '', location.pathname + location.search + '#/flowsheet/watertap.flowsheets.airtap_harvester.airtap_ui/config');
   }
   navigator.serviceWorker.addEventListener('message', event => {
     if (event.data?.type === 'AIRTAP_ACCESS_REQUEST' && event.ports[0]) {

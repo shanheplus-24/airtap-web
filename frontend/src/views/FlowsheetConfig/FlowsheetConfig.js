@@ -1,6 +1,7 @@
+import {isNativeFlowsheet} from '../../services/nativeJobs.service';
 //import './Page.css';
 import React from 'react';
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {useParams, useNavigate, useLocation} from "react-router-dom";
 import {
     getFlowsheet,
@@ -85,15 +86,19 @@ export default function FlowsheetConfig(props) {
     const [solveType, setSolveType] = useState("solve")
     const [analysisName, setAnalysisName] = useState("")
     const [isBuilt, setIsBuilt] = useState(false)
+    const [builtThisVisit, setBuiltThisVisit] = useState(false);
     const [showBuildOptions, setShowBuildOptions] = useState(false)
     const [DOF, setDOF] = useState(flowsheetData?.inputData?.dof || 0);
     const theme = props.theme;
 
     const [inputsChanged, setInputsChanged] = useState(false);
+    const appliedNativeJob = useRef(null);
 
     useEffect(() => {
         if (!params.hasOwnProperty("id") || !params.id)
             return;
+        let active = true;
+        setLoadingFlowsheetData(true);
         // gotta find a way to figure out whether to build or not
         let to_build = 1
         try {
@@ -110,25 +115,36 @@ export default function FlowsheetConfig(props) {
         } catch (e) {
             console.log('unable to check for built status; defaulting to build flowsheet')
         }
-        if (params.id === 'watertap.flowsheets.airtap.airtap_ui') to_build = 0;
+        if (isNativeFlowsheet(params.id)) {
+            to_build = 0;
+            setBuiltThisVisit(false);
+            setSolveType("solve");
+            setSweep(false);
+            setShowBuildOptions(true);
+            setTabValue(0);
+        }
         getFlowsheet(params.id, to_build)
             .then(response => response.json())
             .then((data) => {
+                if (!active) return;
                 // console.log("Flowsheet Data:", data);
                 setLoadingFlowsheetData(false)
-                setFlowsheetData({outputData: data.airtap_has_complete_result ? data : null, inputData: data, name: data.name});
-                if (data.airtap_has_complete_result) setTabValue(1);
+                setFlowsheetData({outputData: isNativeFlowsheet(params.id) ? (data.airtap_has_complete_result ? data : null) : data, inputData: data, name: data.name});
+                if (data.airtap_has_complete_result && !isNativeFlowsheet(params.id)) setTabValue(1);
                 setTitle(getTitle(data));
-                if (params.id === 'watertap.flowsheets.airtap.airtap_ui') setShowBuildOptions(Object.keys(data.exports || {}).length === 0);
+                if (isNativeFlowsheet(params.id)) setShowBuildOptions(true);
             }).catch((e) => {
+            if (!active) return;
             console.error('error getting flowsheet: ', e)
             navigateHome(e)
         });
+        return () => {active = false;};
     }, [params.id]);
 
     useEffect(() => {
-        if (params.id !== 'watertap.flowsheets.airtap.airtap_ui') return;
+        if (!isNativeFlowsheet(params.id)) return;
         const finished = async (event) => {
+            if (event.detail.flowsheet_id !== params.id) return;
             if (event.detail.status !== 'succeeded') {
                 setLoadingFlowsheetData(false);
                 setSolveDialogOpen(false);
@@ -136,6 +152,11 @@ export default function FlowsheetConfig(props) {
             }
             const response = await getFlowsheet(params.id, 0);
             const data = await response.json();
+            setSolveDialogOpen(false);
+            setInputsChanged(false);
+            if (data.airtap_job_id && appliedNativeJob.current === data.airtap_job_id) return;
+            if (data.airtap_job_id) appliedNativeJob.current = data.airtap_job_id;
+            if (event.detail.action === 'build') setBuiltThisVisit(true);
             const output = ['solve', 'sweep'].includes(event.detail.action) ? data : null;
             setFlowsheetData({inputData:data, outputData:output, name:data.name});
             setLoadingFlowsheetData(false);
@@ -148,9 +169,9 @@ export default function FlowsheetConfig(props) {
 
     useEffect(() => {
         const inputs = getInputs(flowsheetData);
-        setIsBuilt(!emptyOrNullObj(inputs));
+        setIsBuilt(!emptyOrNullObj(inputs) && (!isNativeFlowsheet(params.id) || builtThisVisit));
         if (flowsheetData.inputData.dof !== undefined && flowsheetData.inputData.dof !== null) setDOF(flowsheetData.inputData.dof)
-    }, [flowsheetData])
+    }, [flowsheetData, builtThisVisit, params.id])
 
     // useEffect(() => {
     //     if (tabValue !== 0) setShowBuildOptions(false)
@@ -171,6 +192,7 @@ export default function FlowsheetConfig(props) {
                 setFlowsheetData({outputData: null, inputData: data, name: data.name});
                 setTitle(getTitle(data));
                 setShowBuildOptions(false)
+                setBuiltThisVisit(true);
             }).catch((e) => {
             console.error('error getting flowsheet: ', e)
             setLoadingFlowsheetData(false);
@@ -236,9 +258,18 @@ export default function FlowsheetConfig(props) {
     }
 
     const handleSolved = (data) => {
+        if (isNativeFlowsheet(params.id) && data.airtap_job_id) {
+            if (appliedNativeJob.current === data.airtap_job_id) {
+                setSolveDialogOpen(false);
+                setInputsChanged(false);
+                return;
+            }
+            appliedNativeJob.current = data.airtap_job_id;
+        }
         // console.log("handle solved.....",data);
         let tempFlowsheetData = {...flowsheetData}
         tempFlowsheetData.outputData = data
+        if (isNativeFlowsheet(params.id)) tempFlowsheetData.inputData = data;
         setFlowsheetData(tempFlowsheetData);
         setTabValue(1);
         setSolveDialogOpen(false);
@@ -337,8 +368,8 @@ export default function FlowsheetConfig(props) {
         <Container>
             {(loadingFlowsheetData) ?
                 (
-                    params.id === 'watertap.flowsheets.airtap.airtap_ui' ?
-                    <Box sx={{p:4}}><CircularProgress/><Typography sx={{mt:2}}>正在后台准备模型。可以刷新或返回首页；进度和取消按钮保留在右下角。</Typography></Box>
+                    isNativeFlowsheet(params.id) ?
+                    <Box sx={{p:4}}><CircularProgress/><Typography sx={{mt:2}}>Preparing the flowsheet in the background. Progress and cancellation remain available at the bottom right.</Typography></Box>
                     : <Dialog open={loadingFlowsheetData} fullWidth={true} maxWidth="md">
                         <DialogTitle></DialogTitle>
                         <DialogContent>
@@ -378,7 +409,7 @@ export default function FlowsheetConfig(props) {
 
                         </Grid>
 
-                        <Graph/>
+                        <Graph buildOptions={flowsheetData.inputData.build_options}/>
 
                         <Box sx={{width: '100%', border: '0px solid #ddd'}}>
 

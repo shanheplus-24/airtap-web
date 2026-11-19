@@ -59,3 +59,8 @@ export const setProject = (project) => {
         mode: 'cors'
     });
 }
+export const selectLocation = (id, latitude, longitude) => jobRequest('/api/flowsheets/'+id+'/select_location', {
+    method: 'POST',
+    mode: 'cors',
+    body: JSON.stringify({latitude, longitude})
+});

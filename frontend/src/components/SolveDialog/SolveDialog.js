@@ -1,3 +1,4 @@
+import {isNativeFlowsheet} from '../../services/nativeJobs.service';
 import { useEffect } from 'react';   
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog'; 
@@ -60,7 +61,7 @@ export default function SolveDialog(props) {
     
   },[open]);
 
-  if (id === 'watertap.flowsheets.airtap.airtap_ui') return null;
+  if (isNativeFlowsheet(id)) return null;
   return (
     <Dialog open={open} fullWidth={true} maxWidth="md">
         <DialogTitle></DialogTitle>

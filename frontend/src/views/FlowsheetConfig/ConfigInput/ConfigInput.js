@@ -1,3 +1,4 @@
+import {isNativeFlowsheet} from '../../../services/nativeJobs.service';
 import React from 'react';
 import {useEffect, useState, useRef, forwardRef, useImperativeHandle} from 'react';
 import InputAccordion from "../../../components/InputAccordion/InputAccordion";
@@ -307,7 +308,7 @@ export default function ConfigInput(props) {
                                         handleUpdateBounds={handleUpdateBounds}
                                         handleUpdateSamples={handleUpdateSamples}
                                         data={value}
-                                        solveType={solveType}
+                                        solveType={isNativeFlowsheet(params.id) ? "solve" : solveType}
                                     />)
                             }
                         })}
@@ -331,7 +332,7 @@ export default function ConfigInput(props) {
                                         handleUpdateBounds={handleUpdateBounds}
                                         handleUpdateSamples={handleUpdateSamples}
                                         data={value}
-                                        solveType={solveType}
+                                        solveType={isNativeFlowsheet(params.id) ? "solve" : solveType}
                                     />)
                             }
                         })}
@@ -393,7 +394,7 @@ export default function ConfigInput(props) {
                         <Stack direction="row" spacing={2} justifyContent={'flex-end'}
                                alignItems={'flex-end'} sx={{marginBottom: 2}}>
 
-                            <FormControl>
+                            {!isNativeFlowsheet(params.id) && <FormControl>
                                 <InputLabel id="solve-sweep-label">Analysis
                                     Type</InputLabel>
                                 <Select labelId="solve-sweep-label"
@@ -404,9 +405,9 @@ export default function ConfigInput(props) {
                                         onChange={props.handleSelectSolveType}
                                 >
                                     <MenuItem id="solve-option" value="solve">single run</MenuItem>
-                                    <MenuItem id="sweep-option" value="sweep">parameter sweep</MenuItem>
+                                    {!isNativeFlowsheet(params.id) && <MenuItem id="sweep-option" value="sweep">parameter sweep</MenuItem>}
                                 </Select>
-                            </FormControl>
+                            </FormControl>}
                             <div>
                                 <Button id="reset-flowsheet-button" variant="outlined" startIcon={<RefreshIcon/>}
                                         onClick={reset} fullWidth>RESET</Button>
@@ -416,7 +417,7 @@ export default function ConfigInput(props) {
                                 updateFlowsheetData={updateFlowsheetData}
                                 flowsheetData={flowsheetData}
                                 disableRun={disableRun}
-                                solveType={solveType}
+                                solveType={isNativeFlowsheet(params.id) ? "solve" : solveType}
                                 ref={runButtonRef}
                             />
                         </Stack>
@@ -468,7 +469,7 @@ const RunButton = forwardRef(({...props}, ref) => {
     const params = useParams();
     const [nativeBusy,setNativeBusy] = useState(false);
     useEffect(() => {
-        const changed = event => setNativeBusy(params.id === 'watertap.flowsheets.airtap.airtap_ui' && ['queued','running'].includes(event.detail?.status));
+        const changed = event => setNativeBusy(isNativeFlowsheet(params.id) && event.detail?.flowsheet_id === params.id && ['queued','running'].includes(event.detail?.status));
         window.addEventListener('airtap-job-status', changed);
         return () => window.removeEventListener('airtap-job-status', changed);
     }, [params.id]);

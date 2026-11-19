@@ -1,3 +1,5 @@
+import {useParams} from 'react-router-dom';
+import {isNativeFlowsheet} from '../../services/nativeJobs.service';
 import React from 'react'; 
 import {useEffect, useState} from 'react';
 import { TextField, InputAdornment, Tooltip, Grid, MenuItem, FormControl, Select } from '@mui/material'
@@ -11,6 +13,7 @@ export default function InputWrapper(props) {
     // const [ isSweep, setIsSweep ] = useState(fieldData.is_sweep)
     const [ isSweep, setIsSweep ] = useState(false)
     const disabled = false
+    const native = isNativeFlowsheet(useParams().id);
 
     useEffect(()=>{
         if (fieldData.fixed === undefined) {
@@ -19,7 +22,7 @@ export default function InputWrapper(props) {
             setShowBounds(true)
         }
         if (fieldData.fixed === true) {
-
+            setShowBounds(false);
         } else if(fieldData.is_sweep) {
             setIsSweep(true)
         }
@@ -154,8 +157,8 @@ export default function InputWrapper(props) {
                         value={getVariableState()}
                         onChange={handleFixedChange}
                     >
-                    <MenuItem key={true} value={"fixed"}>Fixed</MenuItem>
-                    <MenuItem disabled={!fieldData.has_bounds || disabled} key={false} value={"free"}>Free</MenuItem>
+                    <MenuItem key={true} value={"fixed"}>{native ? 'FIXED' : 'Fixed'}</MenuItem>
+                    <MenuItem disabled={!fieldData.has_bounds || disabled} key={false} value={"free"}>{native ? 'OPTIMAL' : 'Free'}</MenuItem>
                     {solveType === "sweep" && <MenuItem disabled={!fieldData.has_bounds || disabled} key={"sweep"} value={"sweep"}>Sweep</MenuItem>}
                     
                     </Select>

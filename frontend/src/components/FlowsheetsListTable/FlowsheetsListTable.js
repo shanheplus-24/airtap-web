@@ -285,7 +285,7 @@ export default function FlowsheetsListTable(props) {
                                     sx={styles.listRow}
                                     onClick={() => handleFlowsheetClick(row.id_, row.built, row.build_options)}
                                 >
-                                    <TableCell><strong>{row.name === 'airtap native' ? 'AirTAP Native' : row.name}</strong><p style={{margin:0,padding:0}} className='flowsheet-name'>{row.description}</p></TableCell>
+                                    <TableCell><strong>{row.name === 'airtap physics' ? 'AirTAP Physics' : row.name === 'airtap surrogate' ? 'AirTAP Surrogate' : row.name}</strong><p style={{margin:0,padding:0}} className='flowsheet-name'>{row.description}</p></TableCell>
                                     <TableCell
                                         align="right">{formatLastRun(row.last_run)}</TableCell>
                                     <TableCell>

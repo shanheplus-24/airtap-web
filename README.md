@@ -1,10 +1,13 @@
-# AirTAP web
+# AirTAP Physics and Surrogate web
 
-The browser frontend is published at https://shanheplus-24.github.io/airtap-web/.
-Simulation runs on the separately managed NANOENERGYLAB service. An access code is required; credentials are never stored in this repository.
+Website: https://shanheplus-24.github.io/airtap-web/
 
-`site/` contains the production frontend and authenticated API transport. `frontend/` preserves its React/Vite source. `server/` contains the gateway that protects the compute service. GitHub Pages deploys only `site/`.
+The published interface matches the active `WaterTAP_New/UI` frontend. It provides independent `AirTAP Physics` (`watertap.flowsheets.airtap_harvester.airtap_ui`) and `AirTAP Surrogate` (`watertap.flowsheets.airtap_surrogate.airtap_ui`) entries, material FIXED/OPTIMAL controls, location/date inputs, the three native objectives, transient/daily plots and Excel results export.
 
-The current compute connection is a temporary HTTPS tunnel. Its address in `site/compute-config.js` must be updated after a tunnel restart. The website address remains unchanged. The compute service currently has a 24-hour trial limit and does not automatically recover after a server reboot.
+`site/` contains the production frontend and authenticated API transport; `frontend/` contains its matching React/Vite source. GitHub Pages deploys only `site/`. Native models and the packaged GRU assets run privately on NANOENERGYLAB; no model assets, research data or access credentials are published here.
+
+`server/` contains the authenticated gateway. Its primary backend is the verified `WaterTAP_New` release; access to prior job records is retained through the previous private backend. The website uses the existing private access code.
+
+The compute service is still a 24-hour trial, using a temporary HTTPS tunnel whose hostname changes after a tunnel restart. A server reboot requires recovery of the mounted environment and services. The Pages website address remains fixed; this is not a permanent multi-user compute deployment.
 
 The original Flowsheet Processor UI license and copyright notices are retained in `LICENSE`.

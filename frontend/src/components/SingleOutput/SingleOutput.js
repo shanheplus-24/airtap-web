@@ -1,3 +1,4 @@
+import {isNativeFlowsheet, downloadNativeResults} from '../../services/nativeJobs.service';
 import React, {useState, useEffect, Fragment} from "react";
 import {useParams} from "react-router-dom";
 // MUI imports
@@ -11,6 +12,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import {
+    Alert,
     Table,
     TableBody,
     TableCell,
@@ -30,6 +32,7 @@ export default function SingleOutput(props) {
     const [configName, setConfigName] = useState(flowsheetData.name)
     const [openSaveConfig, setOpenSaveConfig] = React.useState(false);
     const [saved, setSaved] = React.useState(false);
+    const [downloadError, setDownloadError] = React.useState('');
     const [outputTableData, setOutputTableData] = useState({})
     const [outputKPIFigures, setOutputKPIFigures] = useState([])
     const [kpiExpanded, setKpiExpanded] = useState('kpiAccordion'); 
@@ -116,6 +119,11 @@ export default function SingleOutput(props) {
 
 
     const handleDownloadOutput = () => {
+        if (isNativeFlowsheet(params.id)) {
+            setDownloadError('');
+            downloadNativeResults(params.id).catch(error => setDownloadError(error.message));
+            return;
+        }
         let headers = ['category', 'metric', 'units', 'value']
         let values = []
         for (let key of Object.keys(flowsheetData.outputData.exports)) {
@@ -216,12 +224,13 @@ export default function SingleOutput(props) {
     return (
         <>
             <Grid item xs={12}>
+                {downloadError && <Alert severity="error">{downloadError}</Alert>}
                 <Toolbar spacing={2}>
                     <Box sx={{flexGrow: 1}}></Box>
                     <Stack direction="row" spacing={2}>
                         <Button variant="outlined" startIcon={<DownloadIcon/>}
                                 onClick={handleDownloadOutput}>
-                            Download Result
+                            {isNativeFlowsheet(params.id) ? "Download Results" : "Download Result"}
                         </Button>
                         <Button disabled={saved} variant="outlined"
                                 startIcon={<SaveIcon/>}

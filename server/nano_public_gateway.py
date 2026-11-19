@@ -1,9 +1,8 @@
-"""Authenticated HTTPS-tunnel gateway for the existing private AirTAP service."""
+"""Authenticated AirTAP_New gateway with access to prior accepted job records."""
 import hashlib
 import hmac
 import os
 from pathlib import Path
-
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,14 +11,13 @@ from fastapi.responses import JSONResponse, Response
 
 def create_app():
     digest = Path(os.environ['AIRTAP_ACCESS_DIGEST_FILE']).read_text().strip()
+    primary = os.environ.get('AIRTAP_PRIVATE_ORIGIN', 'http://127.0.0.1:8091').rstrip('/')
+    legacy = os.environ.get('AIRTAP_LEGACY_ORIGIN', 'http://127.0.0.1:8088').rstrip('/')
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=['https://shanheplus-24.github.io'],
-        allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allow_headers=['Authorization', 'Content-Type'],
-        expose_headers=['Content-Disposition'],
-    )
+    app.add_middleware(CORSMiddleware, allow_origins=['https://shanheplus-24.github.io'],
+                       allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+                       allow_headers=['Authorization', 'Content-Type'],
+                       expose_headers=['Content-Disposition'])
 
     @app.api_route('/{path:path}', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
     async def proxy(path: str, request: Request):
@@ -34,12 +32,13 @@ def create_app():
             return JSONResponse({'detail': 'Request too large'}, status_code=413)
         headers = {k: v for k, v in request.headers.items()
                    if k.lower() not in {'host', 'authorization', 'origin', 'connection', 'content-length'}}
-        target = 'http://127.0.0.1:8088/' + path
-        if request.url.query:
-            target += '?' + request.url.query
+        suffix = '/' + path + ('?' + request.url.query if request.url.query else '')
+        origin = legacy if path.startswith('api/flowsheets/watertap.flowsheets.airtap.airtap_ui/') else primary
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(90, connect=5)) as client:
-                upstream = await client.request(request.method, target, headers=headers, content=body)
+                upstream = await client.request(request.method, origin + suffix, headers=headers, content=body)
+                if upstream.status_code == 404 and path.startswith('api/native_jobs/') and request.method == 'GET':
+                    upstream = await client.request(request.method, legacy + suffix, headers=headers, content=body)
         except httpx.HTTPError:
             return JSONResponse({'detail': 'Computation service unavailable'}, status_code=503)
         omitted = {'content-length', 'content-encoding', 'transfer-encoding', 'connection'}

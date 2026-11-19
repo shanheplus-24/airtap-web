@@ -1,3 +1,4 @@
+import {isNativeFlowsheet} from '../../../services/nativeJobs.service';
 import React from 'react';
 import {useParams} from "react-router-dom";
 import { Grid, Box, Alert } from '@mui/material';
@@ -52,7 +53,7 @@ export default function ConfigOutput(props) {
                         saveConfig={saveConfig} />
                 }
             </Grid>
-            {!isSweep && params.id.includes("airtap.airtap_ui") && <AirTAPTrajectory id={params.id} result={flowsheetData.outputData} />}
+            {!isSweep && isNativeFlowsheet(params.id) && <AirTAPTrajectory id={params.id} result={flowsheetData.outputData} />}
         </Box>
     );
 }
